@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f4effa">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="追剧日记">
+<title>追剧日记</title>
+<style>
+:root{--purple:#7958a7;--lav:#eee6f7;--bg:#f7f4fa;--ink:#30283a;--muted:#92899b;--peach:#d98d68;--green:#648f80}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;padding-bottom:calc(82px + env(safe-area-inset-bottom))}
+header{padding:calc(18px + env(safe-area-inset-top)) 18px 16px;display:flex;justify-content:space-between;align-items:center}
+h1{font-size:27px;margin:0 0 5px;font-weight:800;letter-spacing:.2px}.sub{font-size:12px;color:var(--muted)}
+.logo{width:48px;height:48px;border-radius:50%;background:var(--lav);display:grid;place-items:center;font-size:23px}
+main{padding:0 15px;max-width:720px;margin:auto}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}
+.tile,.card,.panel{background:white;border-radius:18px;padding:14px;box-shadow:0 2px 12px #3d28500a}
+.tile small,.muted{color:var(--muted);font-size:12px}.num{font-size:26px;font-weight:800;color:var(--purple);margin-top:6px}
+.remaining{background:var(--lav);border-radius:18px;padding:16px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.remaining strong{font-size:25px;color:var(--purple)}.remaining small{display:block;color:#82758f;margin-top:4px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.section-title{font-size:18px;font-weight:750;margin:18px 0 12px}
+button{border:0;border-radius:12px;padding:10px 13px;background:var(--lav);color:var(--purple);font-weight:650;font-size:13px}
+button.primary{background:var(--purple);color:white}button.ghost{background:#f5f2f7;color:var(--muted)}button.danger{background:#fff0ed;color:#b85e4c}
+.filters{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}.filters button{white-space:nowrap}.filters button.active{background:var(--purple);color:white}
+.drama{padding:15px;margin-bottom:12px}.poster{width:52px;height:62px;border-radius:12px;background:var(--lav);display:grid;place-items:center;color:var(--purple);font-size:24px;flex-shrink:0}
+.drama-title{font-weight:750;font-size:16px;overflow-wrap:anywhere}.tag{font-size:11px;background:var(--lav);color:var(--purple);padding:5px 8px;border-radius:20px;white-space:nowrap}
+.bar{height:7px;background:#f0edf3;border-radius:10px;overflow:hidden;margin:8px 0 12px}.bar span{height:100%;display:block;background:#a58ac5;border-radius:10px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:12px}.metrics div{background:#f8f6fa;border-radius:10px;padding:8px;text-align:center}.metrics b{display:block;font-size:17px}.metrics small{font-size:10px;color:var(--muted)}
+.actions{display:flex;justify-content:space-between;align-items:center;gap:8px}.actions .left{display:flex;gap:6px}
+.bottom{position:fixed;bottom:0;left:0;right:0;padding:9px 14px calc(9px + env(safe-area-inset-bottom));background:#ffffffed;backdrop-filter:blur(16px);display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #eee8f2;z-index:5}
+.bottom button{background:transparent;color:var(--muted);font-size:12px;padding:8px}.bottom button.active{color:var(--purple);background:var(--lav)}
+.view{display:none}.view.active{display:block}
+.empty{text-align:center;padding:32px 18px;color:var(--muted)}.empty .emoji{font-size:38px;margin-bottom:10px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #e9e3ee;border-radius:11px;background:#fff;font:inherit;color:var(--ink);margin-top:6px}
+label{display:block;font-size:12px;color:var(--muted);margin:12px 0 3px}
+.modal{position:fixed;inset:0;background:#20182b66;display:none;align-items:flex-end;z-index:10}.modal.show{display:flex}.sheet{background:var(--bg);border-radius:22px 22px 0 0;width:100%;max-height:90vh;overflow:auto;padding:18px 18px calc(25px + env(safe-area-inset-bottom))}
+.sheet h2{margin:0 0 12px}.form-actions{display:flex;gap:10px;margin-top:16px}.form-actions button{flex:1}
+.datebox{margin-bottom:14px}.record{display:flex;justify-content:space-between;padding:13px;background:#f8f6fa;border-radius:12px;margin:8px 0}
+.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.statbox{padding:16px;background:white;border-radius:17px}.statbox b{font-size:28px;color:var(--purple);display:block;margin-top:7px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+footer{text-align:center;color:#aaa2b0;font-size:11px;padding:22px}
+</style>
+</head>
+<body>
+<header><div><h1>追剧日记 ✦</h1><div class="sub" id="todayLabel"></div></div><div class="logo">🎬</div></header>
+<main>
+<section id="home" class="view active">
+ <div class="stats">
+  <div class="tile"><small>我的剧集</small><div class="num" id="count">0</div><small>部电视剧</small></div>
+  <div class="tile"><small>累计已看</small><div class="num" id="watched">0</div><small>集</small></div>
+  <div class="tile"><small>今日已看</small><div class="num" id="today">0</div><small>集</small></div>
+ </div>
+ <div class="remaining"><div><b>待追总集数</b><small>所有电视剧剩余集数合计</small></div><strong id="remaining">0 集</strong></div>
+ <div class="row"><div class="section-title" style="margin:0">我的片单</div><button class="primary" onclick="openForm()">＋ 添加电视剧</button></div>
+ <div class="filters" id="filters"></div>
+ <div id="dramas"></div>
+</section>
+<section id="diary" class="view">
+ <div class="section-title">追剧日历</div>
+ <div class="panel datebox"><label for="diaryDate">选择日期</label><input type="date" id="diaryDate" onchange="renderDiary()"></div>
+ <div class="row"><b id="diaryTitle"></b><b id="diaryTotal" style="color:var(--purple)"></b></div>
+ <div id="records"></div>
+</section>
+<section id="stats" class="view">
+ <div class="section-title">追剧数据</div>
+ <div class="statgrid">
+  <div class="statbox"><small class="muted">今日观看</small><b id="sToday">0</b><small class="muted">集</small></div>
+  <div class="statbox"><small class="muted">本周观看</small><b id="sWeek">0</b><small class="muted">集</small></div>
+  <div class="statbox"><small class="muted">累计观看</small><b id="sAll">0</b><small class="muted">集</small></div>
+  <div class="statbox"><small class="muted">待追总数</small><b id="sRemain">0</b><small class="muted">集</small></div>
+ </div>
+ <div class="section-title">各剧观看进度</div><div id="progressList"></div>
+ <div class="section-title">数据备份</div>
+ <div class="panel"><div class="muted">建议定期导出备份，换手机或清理浏览器数据前可用于恢复。</div><div class="tools"><button class="primary" onclick="exportData()">导出备份</button><button onclick="document.getElementById('importFile').click()">导入备份</button><input id="importFile" type="file" accept="application/json" hidden onchange="importData(event)"></div></div>
+</section>
+<footer>追剧日记 · 把每一集精彩都记录下来</footer>
+</main>
+<nav class="bottom"><button class="active" data-tab="home" onclick="tab('home',this)">▣ 剧集</button><button data-tab="diary" onclick="tab('diary',this)">▦ 日历</button><button data-tab="stats" onclick="tab('stats',this)">▤ 统计</button></nav>
+<div class="modal" id="modal" onclick="if(event.target===this)closeForm()"><div class="sheet">
+ <h2 id="formTitle">添加电视剧</h2><input id="editId" type="hidden">
+ <label>电视剧名称</label><input id="fTitle" placeholder="例如：长相思">
+ <div class="row"><div style="flex:1"><label>总集数</label><input id="fTotal" type="number" min="1" value="24"></div><div style="flex:1"><label>已观看集数</label><input id="fWatched" type="number" min="0" value="0"></div></div>
+ <div class="row"><div style="flex:1"><label>目前已更新至</label><input id="fAired" type="number" min="0" value="0"></div><div style="flex:1"><label>剧集状态</label><select id="fStatus"><option>更新中</option><option>已完结</option><option>待开播</option></select></div></div>
+ <label>开播日期（选填）</label><input id="fDate" type="date">
+ <label>备注（选填）</label><textarea id="fNotes" rows="2" placeholder="记录一点追剧感想…"></textarea>
+ <div class="form-actions"><button class="ghost" onclick="closeForm()">取消</button><button class="primary" onclick="saveDrama()">保存</button></div>
+</div></div>
+<script>
+const KEY='drama-diary-web-v1';
+let data={dramas:[],records:[]},filter='全部',currentTab='home';
+const $=id=>document.getElementById(id);
+const todayKey=()=>new Date().toLocaleDateString('sv-SE');
+const dayKey=d=>new Date(d).toLocaleDateString('sv-SE');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function load(){try{data=JSON.parse(localStorage.getItem(KEY))||data}catch(e){};if(!Array.isArray(data.dramas))data.dramas=[];if(!Array.isArray(data.records))data.records=[]}
+function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
+function tab(name,el){currentTab=name;document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===name));document.querySelectorAll('.bottom button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));if(name==='diary')renderDiary();if(name==='stats')renderStats()}
+function addRecord(drama,n,date=todayKey()){let r=data.records.find(x=>x.dramaId===drama.id&&x.date===date);if(r)r.episodes+=n;else data.records.push({id:crypto.randomUUID(),dramaId:drama.id,title:drama.title,date,episodes:n})}
+function watched(drama,delta){let old=drama.watched;drama.watched=Math.max(0,Math.min(drama.total,drama.watched+delta));let actual=drama.watched-old;if(actual>0)addRecord(drama,actual);if(actual<0){let n=-actual;data.records.filter(r=>r.dramaId===drama.id).sort((a,b)=>b.date.localeCompare(a.date)).forEach(r=>{let x=Math.min(n,r.episodes);r.episodes-=x;n-=x});data.records=data.records.filter(r=>r.episodes>0)}save()}
+function render(){let ds=data.dramas;let all=ds.reduce((a,d)=>a+d.watched,0),remain=ds.reduce((a,d)=>a+Math.max(0,d.total-d.watched),0),tod=data.records.filter(r=>r.date===todayKey()).reduce((a,r)=>a+r.episodes,0);$('count').textContent=ds.length;$('watched').textContent=all;$('today').textContent=tod;$('remaining').textContent=remain+' 集';
+$('filters').innerHTML=['全部','更新中','已完结','待开播'].map(x=>`<button class="${filter===x?'active':''}" onclick="filter='${x}';render()">${x}</button>`).join('');
+let list=ds.filter(d=>filter==='全部'||d.status===filter);$('dramas').innerHTML=list.length?list.map(d=>`<article class="card drama"><div class="row" style="align-items:flex-start"><div class="row" style="justify-content:flex-start;min-width:0"><div class="poster">▶</div><div style="min-width:0"><div class="drama-title">${esc(d.title)}</div><div class="muted" style="margin-top:5px">${d.status==='待开播'?'等待开播':`目前更新至第 ${d.aired} 集`} · 共 ${d.total} 集</div></div></div><span class="tag">${d.status}</span></div><div class="row muted" style="margin-top:14px"><span>观看进度</span><b style="color:var(--purple)">${Math.round(d.watched/d.total*100)}%</b></div><div class="bar"><span style="width:${d.watched/d.total*100}%"></span></div><div class="metrics"><div><b style="color:var(--purple)">${d.watched}</b><small>已观看</small></div><div><b style="color:var(--peach)">${Math.max(0,d.total-d.watched)}</b><small>待追集数</small></div><div><b style="color:var(--green)">${d.aired}</b><small>已更新</small></div></div><div class="actions"><div class="left"><button class="ghost" onclick="watched(data.dramas.find(x=>x.id==='${d.id}'),-1)">−</button><button class="primary" onclick="watched(data.dramas.find(x=>x.id==='${d.id}'),1)" ${d.watched>=d.total?'disabled':''}>＋ 看完一集</button></div><div class="left"><button onclick="editDrama('${d.id}')">编辑</button><button class="danger" onclick="deleteDrama('${d.id}')">删除</button></div></div></article>`).join(''):`<div class="card empty"><div class="emoji">🎬</div><b>片单还是空的</b><p>添加第一部电视剧，开始记录追剧进度吧。</p><button class="primary" onclick="openForm()">添加电视剧</button></div>`;
+if($('diaryDate')&&!$('diaryDate').value)$('diaryDate').value=todayKey();
+}
+function openForm(){ $('formTitle').textContent='添加电视剧';$('editId').value='';$('fTitle').value='';$('fTotal').value=24;$('fWatched').value=0;$('fAired').value=0;$('fStatus').value='更新中';$('fDate').value='';$('fNotes').value='';$('modal').classList.add('show')}
+function editDrama(id){let d=data.dramas.find(x=>x.id===id);if(!d)return;openForm();$('formTitle').textContent='编辑电视剧';$('editId').value=id;$('fTitle').value=d.title;$('fTotal').value=d.total;$('fWatched').value=d.watched;$('fAired').value=d.aired;$('fStatus').value=d.status;$('fDate').value=d.date||'';$('fNotes').value=d.notes||''}
+function closeForm(){$('modal').classList.remove('show')}
+function saveDrama(){let title=$('fTitle').value.trim(),total=Math.max(1,Number($('fTotal').value)||1),w=Math.min(total,Math.max(0,Number($('fWatched').value)||0)),aired=Math.min(total,Math.max(0,Number($('fAired').value)||0));if(!title){alert('请填写电视剧名称');return}let id=$('editId').value;if(id){let d=data.dramas.find(x=>x.id===id);if(d){d.title=title;d.total=total;d.watched=w;d.aired=aired;d.status=$('fStatus').value;d.date=$('fDate').value;d.notes=$('fNotes').value}}else data.dramas.unshift({id:crypto.randomUUID(),title,total,watched:w,aired,status:$('fStatus').value,date:$('fDate').value,notes:$('fNotes').value});closeForm();save()}
+function deleteDrama(id){if(!confirm('确定删除这部电视剧及其记录吗？'))return;data.dramas=data.dramas.filter(d=>d.id!==id);data.records=data.records.filter(r=>r.dramaId!==id);save()}
+function renderDiary(){let date=$('diaryDate').value||todayKey(),rs=data.records.filter(r=>r.date===date);$('diaryTitle').textContent=date;$('diaryTotal').textContent='观看 '+rs.reduce((a,r)=>a+r.episodes,0)+' 集';$('records').innerHTML=rs.length?rs.map(r=>`<div class="record"><div><b>${esc(r.title)}</b><div class="muted">观看 ${r.episodes} 集</div></div><b style="color:var(--green)">+${r.episodes}</b></div>`).join(''):'<div class="card empty"><div class="emoji">📖</div>这一天还没有追剧记录</div>'}
+function renderStats(){let now=new Date(),start=new Date(now);start.setDate(now.getDate()-((now.getDay()+6)%7));let sum=(arr)=>arr.reduce((a,r)=>a+r.episodes,0),today=data.records.filter(r=>r.date===todayKey()),week=data.records.filter(r=>new Date(r.date+'T00:00:00')>=start),all=data.dramas.reduce((a,d)=>a+d.watched,0),remain=data.dramas.reduce((a,d)=>a+Math.max(0,d.total-d.watched),0);$('sToday').textContent=sum(today);$('sWeek').textContent=sum(week);$('sAll').textContent=all;$('sRemain').textContent=remain;$('progressList').innerHTML=data.dramas.length?data.dramas.map(d=>`<div class="panel" style="margin:9px 0"><div class="row"><b>${esc(d.title)}</b><small class="muted">${d.watched}/${d.total}</small></div><div class="bar"><span style="width:${d.watched/d.total*100}%"></span></div></div>`).join(''):'<div class="card empty">添加电视剧后，这里会显示进度。</div>'}
+function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='追剧日记备份.json';a.click();URL.revokeObjectURL(a.href)}
+function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!Array.isArray(x.dramas)||!Array.isArray(x.records))throw 0;if(confirm('导入将覆盖当前片单和记录，确定继续吗？')){data=x;save();alert('导入成功')}}catch(err){alert('文件格式不正确，无法导入')}};r.readAsText(f);e.target.value=''}
+$('todayLabel').textContent=new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+$('diaryDate').value=todayKey();load();render();renderDiary();
+</script>
+</body></html>
