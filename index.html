@@ -127,9 +127,9 @@ async function searchEpisodeCount(){
   const response=await fetch(reader,{signal:controller.signal,headers:{'Accept':'text/plain','X-Engine':'direct','X-Respond-Timing':'visible-content','X-Timeout':'8','X-Token-Budget':'1500','X-Retain-Images':'none','X-Retain-Links':'none'}});
   if(!response.ok)throw new Error('搜索服务暂时不可用');
   const body=(await response.text()).slice(0,14000);const candidates=extractEpisodeCandidates(body);
-  if(!candidates.length){box.innerHTML='<div class="muted">没有识别到明确的总集数，请直接手动填写总集数即可。</div>';return}
+  if(!candidates.length){box.innerHTML='<div class="muted">没有识别到明确的总集数，请直接手动填写总集数即可。也可以补充年份或播出平台后再试一次。</div>';return}
   box.innerHTML='<label style="margin:0 0 4px">请选择识别到的总集数</label><select id="episodeChoice"><option value="">请选择总集数</option>'+candidates.map(x=>'<option value="'+x.count+'">'+x.count+' 集 — '+esc(x.context)+'</option>').join('')+'</select><button type="button" class="primary" style="margin-top:8px" onclick="applyEpisodeChoice()">使用所选集数</button><div class="muted" style="margin-top:7px">结果来自百度搜索摘要，不同播出版本可能集数不同，请核对后选择。</div>';
- }catch(e){let msg=e.name==='AbortError'?'搜索超时，请直接手动填写总集数。':'搜索失败，可能是网络或服务限制，请直接手动填写总集数。';box.innerHTML='<div class="muted">'+msg+'</div>''}
+ }catch(e){let msg=e.name==='AbortError'?'搜索超时，请直接手动填写总集数。':'搜索失败，可能是网络或服务限制，请直接手动填写总集数。';box.innerHTML='<div class="muted">'+msg+'</div>'}
  finally{clearTimeout(timer);if(btn){btn.disabled=false;btn.textContent='网络查集数'}}
 }
 function applyEpisodeChoice(){let n=Number($('episodeChoice')?.value);if(!n){alert('请先选择一个总集数');return}$('fTotal').value=n;if(Number($('fWatched').value)>n)$('fWatched').value=n;if(Number($('fAired').value)>n)$('fAired').value=n;$('matchResults').innerHTML='<div class="muted">已将总集数设置为 '+n+' 集。</div>'}
