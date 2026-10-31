@@ -143,6 +143,10 @@ function renderDiary(){let date=$('diaryDate').value||todayKey(),rs=data.records
 function renderStats(){let now=new Date(),start=new Date(now);start.setDate(now.getDate()-((now.getDay()+6)%7));let sum=(arr)=>arr.reduce((a,r)=>a+r.episodes,0),today=data.records.filter(r=>r.date===todayKey()),week=data.records.filter(r=>new Date(r.date+'T00:00:00')>=start),all=data.dramas.reduce((a,d)=>a+d.watched,0),remain=data.dramas.reduce((a,d)=>a+Math.max(0,d.total-d.watched),0);$('sToday').textContent=sum(today);$('sWeek').textContent=sum(week);$('sAll').textContent=all;$('sRemain').textContent=remain;$('progressList').innerHTML=data.dramas.length?data.dramas.map(d=>`<div class="panel" style="margin:9px 0"><div class="row"><b>${esc(d.title)}</b><small class="muted">${d.watched}/${d.total}</small></div><div class="bar"><span style="width:${d.watched/d.total*100}%"></span></div></div>`).join(''):'<div class="card empty">添加电视剧后，这里会显示进度。</div>'}
 function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='追剧日记备份.json';a.click();URL.revokeObjectURL(a.href)}
 function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!Array.isArray(x.dramas)||!Array.isArray(x.records))throw 0;if(confirm('导入将覆盖当前片单和记录，确定继续吗？')){data=x;save();alert('导入成功')}}catch(err){alert('文件格式不正确，无法导入')}};r.readAsText(f);e.target.value=''}
+// iOS 主屏幕网页 App 兼容层：显式把内联按钮会调用的函数挂到 window，避免独立模式下全局函数解析异常。
+Object.assign(window,{render,tab,openForm,editDrama,closeForm,searchEpisodeCount,applyEpisodeChoice,saveDrama,deleteDrama,reorderDrama,watched,renderDiary,renderStats,exportData,importData});
+try{Object.defineProperty(window,'filter',{configurable:true,get:()=>filter,set:v=>{filter=v}})}catch(e){}
+try{Object.defineProperty(window,'data',{configurable:true,get:()=>data,set:v=>{data=v}})}catch(e){}
 $('todayLabel').textContent=new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
 $('diaryDate').value=todayKey();load();render();renderDiary();
 </script>
