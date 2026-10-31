@@ -109,17 +109,29 @@ function openForm(){ $('formTitle').textContent='添加电视剧';$('editId').va
 function editDrama(id){let d=data.dramas.find(x=>x.id===id);if(!d)return;openForm();$('formTitle').textContent='编辑电视剧';$('editId').value=id;$('fTitle').value=d.title;$('fTotal').value=d.total;$('fWatched').value=d.watched;$('fAired').value=d.aired;$('fStatus').value=d.status;$('fDate').value=d.date||'';$('fNotes').value=d.notes||'';$('fPoster').value=d.poster||'';$('fDouban').value=d.doubanUrl||'';$('matchResults').innerHTML=''}
 function closeForm(){$('modal').classList.remove('show')}
 function extractEpisodeCandidates(text){
- let found=[]; const patterns=[/(?:全\s*)?(\d{1,3})\s*集\s*(?:全|完结|大结局)/g,/(?:共|总计|总共|全剧共|全\s*\d{1,3}\s*集)[^\d]{0,8}(\d{1,3})\s*集/g,/(\d{1,3})\s*集(?:电视剧|网剧|连续剧)/g,/(?:总集数|集数)\s*[:：为约]?\s*(\d{1,3})\s*集?/g];
- for(const re of patterns){let m;while((m=re.exec(text))!==null){let n=Number(m[1]);let before=text.slice(Math.max(0,m.index-24),m.index);let around=text.slice(m.index,Math.min(text.length,m.index+45));if(n>0&&n<300&&!/(更新至|已更新|播出至|目前更新|更至)\s*$/.test(before)&&!/(更新至|已更新)/.test(around))found.push({count:n,context:(before+around).replace(/\s+/g,' ').slice(-100)});}}
- const seen=new Set();return found.filter(x=>!seen.has(x.count)&&seen.add(x.count)).slice(0,8)
+ let found=[]; const patterns=[/(?:全\s*)?(\d{1,3})\s*集\s*(?:全|完结|大结局)/g,/(?:共|总计|总共|全剧共)[^\d]{0,8}(\d{1,3})\s*集/g,/(\d{1,3})\s*集(?:电视剧|网剧|连续剧)/g,/(?:总集数|集数)\s*[:：为约]?\s*(\d{1,3})\s*集?/g];
+ for(const re of patterns){let m;while((m=re.exec(text))!==null){let n=Number(m[1]);let before=text.slice(Math.max(0,m.index-28),m.index);let around=text.slice(m.index,Math.min(text.length,m.index+48));if(n>0&&n<300&&!/(更新至|已更新|播出至|目前更新|更至)\s*$/.test(before)&&!/(更新至|已更新|播出至)/.test(around))found.push({count:n,context:(before+around).replace(/\s+/g,' ').slice(-105)});}}
+ const counts=new Map();for(const x of found){if(!counts.has(x.count))counts.set(x.count,x)}
+ return [...counts.values()].slice(0,5)
 }
-async function searchEpisodeCount(){let q=$('fTitle').value.trim();if(!q){alert('请先填写电视剧名称');return}let box=$('matchResults');box.innerHTML='<div class="muted">正在通过百度搜索剧集总集数…</div>';let query='电视剧 '+q+' 总集数 一共多少集 全'+q+'集';try{
- const target='https://www.baidu.com/s?wd='+encodeURIComponent(query)+'&ie=utf-8&rn=20';
- const response=await fetch('https://r.jina.ai/http://'+target.replace(/^https?:\/\//,''),{headers:{'Accept':'text/plain'}});
- if(!response.ok)throw new Error('百度搜索结果暂时无法读取');const body=await response.text();const candidates=extractEpisodeCandidates(body);
- if(!candidates.length){box.innerHTML='<div class="muted">百度暂时没有返回可确认的总集数。你可以补充年份或播出平台后重试，也可以手动填写。</div><button type="button" class="ghost" onclick="window.open(\''+target+'\',\'_blank\')">打开百度查看原始结果</button>';return}
- box.innerHTML='<label style="margin:0 0 4px">识别到多个可能的总集数，请选择正确版本</label><select id="episodeChoice"><option value="">请选择总集数</option>'+candidates.map((x,i)=>'<option value="'+x.count+'">'+x.count+' 集 — '+esc(x.context)+'</option>').join('')+'</select><button type="button" class="primary" style="margin-top:8px" onclick="applyEpisodeChoice()">使用所选集数</button><div class="muted" style="margin-top:7px">识别结果来自百度网页摘要，可能包含不同版本或错误信息，请按播出平台核对。</div><button type="button" class="ghost" style="margin-top:7px" onclick="window.open(\''+target+'\',\'_blank\')">查看百度完整搜索结果</button>';
- }catch(e){box.innerHTML='<div class="muted">自动读取百度结果失败（可能是网络或跨域限制）。可以打开百度搜索查看，或手动填写总集数。</div><button type="button" class="ghost" onclick="window.open(\''+'https://www.baidu.com/s?wd='+encodeURIComponent(query)+'\',\'_blank\')">打开百度搜索</button>'}}
+async function searchEpisodeCount(){
+ let q=$('fTitle').value.trim();if(!q){alert('请先填写电视剧名称');return}
+ let box=$('matchResults');let btn=document.querySelector('.search-row button');
+ if(btn){btn.disabled=true;btn.textContent='搜索中…'}
+ box.innerHTML='<div class="muted">正在快速搜索，通常几秒内返回…</div>';
+ const query='"'+q+'" 总集数 一共多少集 多少集全';
+ const target='https://www.baidu.com/s?wd='+encodeURIComponent(query)+'&ie=utf-8&rn=8';
+ const reader='https://r.jina.ai/http://'+target.replace(/^https?:\/\//,'');
+ const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),9000);
+ try{
+  const response=await fetch(reader,{signal:controller.signal,headers:{'Accept':'text/plain','X-Engine':'direct','X-Respond-Timing':'visible-content','X-Timeout':'8','X-Token-Budget':'1500','X-Retain-Images':'none','X-Retain-Links':'none'}});
+  if(!response.ok)throw new Error('搜索服务暂时不可用');
+  const body=(await response.text()).slice(0,14000);const candidates=extractEpisodeCandidates(body);
+  if(!candidates.length){box.innerHTML='<div class="muted">没有识别到明确的总集数，请直接手动填写总集数即可。</div>';return}
+  box.innerHTML='<label style="margin:0 0 4px">请选择识别到的总集数</label><select id="episodeChoice"><option value="">请选择总集数</option>'+candidates.map(x=>'<option value="'+x.count+'">'+x.count+' 集 — '+esc(x.context)+'</option>').join('')+'</select><button type="button" class="primary" style="margin-top:8px" onclick="applyEpisodeChoice()">使用所选集数</button><div class="muted" style="margin-top:7px">结果来自百度搜索摘要，不同播出版本可能集数不同，请核对后选择。</div>';
+ }catch(e){let msg=e.name==='AbortError'?'搜索超时，请直接手动填写总集数。':'搜索失败，可能是网络或服务限制，请直接手动填写总集数。';box.innerHTML='<div class="muted">'+msg+'</div>''}
+ finally{clearTimeout(timer);if(btn){btn.disabled=false;btn.textContent='网络查集数'}}
+}
 function applyEpisodeChoice(){let n=Number($('episodeChoice')?.value);if(!n){alert('请先选择一个总集数');return}$('fTotal').value=n;if(Number($('fWatched').value)>n)$('fWatched').value=n;if(Number($('fAired').value)>n)$('fAired').value=n;$('matchResults').innerHTML='<div class="muted">已将总集数设置为 '+n+' 集。</div>'}
 function parseEpisodeCount(item){let candidates=[item.episodes_info,item.episodes,item.episode_count,item.total_episodes,item.card_subtitle,item.title];for(let v of candidates){if(typeof v==='number'&&v>0)return v;if(typeof v==='string'){let m=v.match(/(\d{1,3})\s*(?:集|episodes?)/i);if(m)return Number(m[1]);}}return null}
 function knownEpisodeCount(title){let t=String(title||'').replace(/[\s··:：()（）【】\[\]\-]/g,'');if(t.includes('嫁金钗'))return 30;return null}
